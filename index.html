@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVODESIGN | Developed by ZINO</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #f97316; 
+            --bg: #020617;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+
+        /* Navbar */
+        nav {
+            padding: 20px 8%; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.8rem; font-weight: 900; color: white; text-decoration: none; }
+        .logo span { color: var(--primary); }
+
+        /* Hero Section */
+        .hero { padding: 100px 20px; text-align: center; background: radial-gradient(circle at top, #1e1b4b, transparent); }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 15px; font-weight: 900; }
+        .hero p { color: #94a3b8; font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
+
+        /* Grid */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; }
+
+        /* Cards */
+        .card {
+            background: var(--glass); border-radius: 25px; border: 1px solid var(--border);
+            overflow: hidden; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card:hover { transform: translateY(-15px); border-color: var(--primary); }
+        .media { width: 100%; height: 210px; background: #000; }
+        .media iframe { width: 100%; height: 100%; border: none; }
+        .info { padding: 25px; }
+        .tag { background: rgba(249, 115, 22, 0.2); color: var(--primary); padding: 5px 15px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; margin-bottom: 15px; display: inline-block; }
+
+        /* Footer */
+        footer {
+            margin-top: 100px; padding: 80px 20px; border-top: 1px solid var(--border);
+            text-align: center; background: #010413;
+        }
+        .footer-logo { font-size: 1.8rem; font-weight: 900; margin-bottom: 25px; }
+        .social-links { display: flex; justify-content: center; gap: 25px; margin: 30px 0; }
+        .social-links a {
+            width: 55px; height: 55px; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.6rem; transition: 0.3s; text-decoration: none;
+        }
+        .social-links a:hover { background: var(--primary); color: #000; transform: translateY(-5px); }
+        .dev-credit { color: #64748b; font-size: 1rem; }
+        .dev-credit b { color: var(--primary); }
+
+        /* Floating Admin Button */
+        .fab {
+            position: fixed; bottom: 30px; left: 30px; width: 65px; height: 65px;
+            background: var(--primary); border-radius: 20px; display: flex;
+            align-items: center; justify-content: center; font-size: 1.6rem; color: #000;
+            cursor: pointer; z-index: 1001; box-shadow: 0 10px 30px rgba(249, 115, 22, 0.4);
+        }
+
+        /* Admin Modal */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px;
+        }
+        .modal-box {
+            background: #0f172a; width: 100%; max-width: 550px; padding: 40px;
+            border-radius: 35px; border: 1px solid var(--primary);
+        }
+        input, textarea, select {
+            width: 100%; padding: 18px; margin-bottom: 15px; border-radius: 15px;
+            background: #020617; border: 1px solid var(--border); color: white;
+        }
+        .btn-post { background: var(--primary); color: #000; border: none; padding: 18px; width: 100%; border-radius: 15px; font-weight: 900; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo">EVO<span>DESIGN</span></a>
+    <div onclick="App.auth()" style="cursor:pointer; opacity: 0.4;"><i class="fa-solid fa-bolt-lightning"></i></div>
+</nav>
+
+<header class="hero">
+    <h1>منصة <span>EVODESIGN</span></h1>
+    <p>بوابة المحتوى الإبداعي والدروس الأكاديمية المطورة بواسطة <b>ZINO</b></p>
+</header>
+
+<div class="container">
+    <div id="main-grid" class="grid">
+        </div>
+</div>
+
+<div class="fab" onclick="App.openModal()"><i class="fa-solid fa-plus"></i></div>
+
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <h2 style="margin-bottom:25px; color:var(--primary);">إضافة محتوى جديد (ZINO ADMIN)</h2>
+        <input type="text" id="title" placeholder="عنوان المحتوى">
+        <input type="text" id="ytid" placeholder="ID فيديو اليوتيوب">
+        <select id="category">
+            <option value="الأكاديمية">قسم الأكاديمية</option>
+            <option value="المشاريع">معرض المشاريع</option>
+        </select>
+        <textarea id="desc" rows="3" placeholder="وصف المحتوى..."></textarea>
+        <button class="btn-post" onclick="App.save()">نشر الآن على الموقع</button>
+        <p onclick="App.closeModal()" style="text-align:center; margin-top:20px; cursor:pointer; color:#666;">إغلاق</p>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-logo">EVO<span>DESIGN</span></div>
+    <div class="dev-credit">تم التطوير والبرمجة بواسطة المبدع <b>ZINO</b></div>
+    
+    <div class="social-links">
+        <a href="https://instagram.com/zino_evodesign" target="_blank">
+            <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="#"><i class="fa-solid fa-paper-plane"></i></a>
+    </div>
+
+    <div class="copyright">© 2026 جميع الحقوق محفوظة لـ EVODESIGN</div>
+</footer>
+
+<script>
+    // إعدادات Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyChebvAoLtlWECNTsCN-kj6fMl6M50JzsI",
+        authDomain: "evodesign-97d83.firebaseapp.com",
+        projectId: "evodesign-97d83",
+        storageBucket: "evodesign-97d83.firebasestorage.app",
+        messagingSenderId: "125352330060",
+        appId: "1:125352330060:web:7ff0ef1b454eadc98a85e9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const App = {
+        isLogged: false,
+
+        auth() {
+            if(prompt("كلمة سر المطور ZINO:") === "123") {
+                this.isLogged = true;
+                alert("مرحباً بك يا ZINO! وضع التحكم مفعل.");
+                this.render();
+            }
+        },
+
+        openModal() { if(this.isLogged) document.getElementById('modal').style.display='flex'; else alert("هذه اللوحة مخصصة للمطور ZINO فقط."); },
+        closeModal() { document.getElementById('modal').style.display='none'; },
+
+        async save() {
+            const data = {
+                title: document.getElementById('title').value,
+                yt: document.getElementById('ytid').value,
+                cat: document.getElementById('category').value,
+                desc: document.getElementById('desc').value,
+                created: Date.now()
+            };
+            if(!data.title || !data.yt) return alert("يرجى إكمال البيانات");
+            await db.collection("zino_master_data").add(data);
+            this.closeModal();
+        },
+
+        async deleteItem(id) { if(confirm("هل تريد حذف هذا المحتوى؟")) await db.collection("zino_master_data").doc(id).delete(); },
+
+        render() {
+            db.collection("zino_master_data").orderBy("created", "desc").onSnapshot(snap => {
+                const grid = document.getElementById('main-grid');
+                grid.innerHTML = "";
+                snap.forEach(doc => {
+                    const item = doc.data();
+                    grid.innerHTML += `
+                        <div class="card">
+                            <div class="media">
+                                <iframe src="https://www.youtube.com/embed/${item.yt}"></iframe>
+                            </div>
+                            <div class="info">
+                                <span class="tag">${item.cat}</span>
+                                <h3>${item.title}</h3>
+                                <p style="color:#64748b; font-size:0.9rem;">${item.desc}</p>
+                                ${this.isLogged ? `<button onclick="App.deleteItem('${doc.id}')" style="background:none; border:1px solid #ff4444; color:#ff4444; padding:5px 10px; margin-top:10px; border-radius:8px; cursor:pointer;">حذف</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+    };
+
+    window.onload = () => App.render();
+</script>
+</body>
+</html>
