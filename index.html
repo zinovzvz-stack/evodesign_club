@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EVODESIGN | MOBILE & PC READY</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Orbitron:wght@900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --orange: #fb923c; --blue: #38bdf8; --purple: #a855f7;
+            --bg: #020617; --card: rgba(15, 23, 42, 0.9);
+            --gradient: linear-gradient(135deg, var(--blue), var(--purple), var(--orange));
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; overflow-x: hidden; padding-bottom: 70px; } /* زيادة padding للهاتف */
+
+        /* Background */
+        .bg-glow { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #020617 100%); opacity: 0.5; }
+
+        /* Navbar - متجاوب */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            padding: 15px 5%; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; text-decoration: none; color: #fff; font-weight: 900; }
+        .logo span { color: var(--orange); }
+
+        /* قائمة الكمبيوتر */
+        .nav-links { display: flex; gap: 5px; }
+        .nav-btn { padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #94a3b8; transition: 0.3s; }
+        .nav-btn.active { background: rgba(255,255,255,0.05); color: var(--orange); border: 1px solid var(--orange); }
+
+        /* القائمة السفلية للهاتف */
+        .mobile-nav {
+            position: fixed; bottom: 0; width: 100%; background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1);
+            display: none; justify-content: space-around; padding: 10px 0; z-index: 1000;
+        }
+        .m-nav-item { text-align: center; color: #94a3b8; font-size: 0.7rem; text-decoration: none; }
+        .m-nav-item i { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+        .m-nav-item.active { color: var(--orange); }
+
+        /* Container & Grid - الأهم للتجاوب */
+        .page { display: none; padding: 100px 5% 40px; min-height: 100vh; max-width: 1400px; margin: 0 auto; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* تكييف تلقائي */
+            gap: 20px; 
+        }
+
+        /* Card Style */
+        .card { 
+            background: var(--card); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden; display: flex; flex-direction: column; height: 100%;
+        }
+        .media-area { height: 200px; background: #000; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .media-area iframe { width: 100%; height: 100%; border: none; }
+        
+        /* Pinterest Fix UI */
+        .pin-placeholder { text-align: center; padding: 20px; }
+        .pin-placeholder i { font-size: 3rem; color: #e60023; margin-bottom: 10px; }
+
+        .card-content { padding: 20px; flex-grow: 1; }
+        .card-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; color: var(--blue); }
+        .card-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 850px) {
+            .nav-links { display: none; } /* إخفاء قائمة الكمبيوتر */
+            .mobile-nav { display: flex; } /* إظهار قائمة الهاتف */
+            .page { padding-top: 80px; }
+            .grid { grid-template-columns: 1fr; } /* بطاقة واحدة في العرض للهواتف الصغيرة */
+            .logo { font-size: 1.2rem; }
+        }
+
+        /* Admin Tools */
+        .admin-fab { position: fixed; bottom: 85px; left: 20px; width: 55px; height: 55px; background: var(--gradient); border-radius: 50%; display: none; align-items: center; justify-content: center; color: #fff; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        /* Modal Responsive */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-box { background: #0f172a; padding: 25px; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid var(--orange); }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: #020617; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 0.9rem; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <nav>
+        <a href="#" class="logo" onclick="EVO.route('home')">EVO<span>DESIGN</span></a>
+        <div class="nav-links">
+            <div class="nav-btn active" id="btn-home" onclick="EVO.route('home')">الرئيسية</div>
+            <div class="nav-btn" id="btn-acad" onclick="EVO.route('acad')">الأكاديمية</div>
+            <div class="nav-btn" id="btn-show" onclick="EVO.route('show')">المعرض</div>
+            <div class="nav-btn" id="btn-store" onclick="EVO.route('store')">المتجر</div>
+        </div>
+        <div onclick="EVO.adminLogin()" style="opacity: 0.1;"><i class="fa-solid fa-user-shield"></i></div>
+    </nav>
+
+    <div class="mobile-nav">
+        <a href="javascript:void(0)" class="m-nav-item active" id="m-home" onclick="EVO.route('home')"><i class="fa-solid fa-house"></i>الرئيسية</a>
+        <a href="javascript:void(0)" class="m-nav-item" id="m-acad" onclick="EVO.route('acad')"><i class="fa-solid fa-graduation-cap"></i>الأكاديمية</a>
+        <a href="javascript:void(0)" class="m-nav-item" id="m-show" onclick="EVO.route('show')"><i class="fa-solid fa-image"></i>المعرض</a>
+        <a href="javascript:void(0)" class="m-nav-item" id="m-store" onclick="EVO.route('store')"><i class="fa-solid fa-store"></i>المتجر</a>
+    </div>
+
+    <main>
+        <section id="home" class="page active">
+            <div class="grid" id="grid-home"></div>
+        </section>
+        <section id="acad" class="page"><div class="grid" id="grid-acad"></div></section>
+        <section id="show" class="page"><div class="grid" id="grid-show"></div></section>
+        <section id="store" class="page"><div class="grid" id="grid-store"></div></section>
+    </main>
+
+    <div class="admin-fab" id="adminFab" onclick="EVO.modal(true)"><i class="fa-solid fa-plus"></i></div>
+
+    <div class="modal" id="modal">
+        <div class="modal-box">
+            <h3 style="margin-bottom: 15px;">إضافة محتوى جديد</h3>
+            <input type="text" id="mTitle" placeholder="العنوان">
+            <input type="text" id="mLink" placeholder="رابط YT / Pinterest / File">
+            <select id="mCat">
+                <option value="acad">الأكاديمية</option>
+                <option value="show">المعرض</option>
+                <option value="store">المتجر</option>
+            </select>
+            <textarea id="mDesc" rows="3" placeholder="الوصف..."></textarea>
+            <button onclick="EVO.save()" style="width:100%; padding:15px; background:var(--gradient); border:none; border-radius:10px; color:#fff; font-weight:900; cursor:pointer;">نشر الإبداع</button>
+            <p onclick="EVO.modal(false)" style="text-align: center; margin-top: 15px; cursor: pointer; opacity: 0.5;">إلغاء</p>
+        </div>
+    </div>
+
+    <script>
+        // تكوين Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyChebvAoLtlWECNTsCN-kj6fMl6M50JzsI",
+            authDomain: "evodesign-97d83.firebaseapp.com",
+            projectId: "evodesign-97d83",
+            storageBucket: "evodesign-97d83.firebasestorage.app",
+            messagingSenderId: "125352330060",
+            appId: "1:125352330060:web:7ff0ef1b454eadc98a85e9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const EVO = {
+            isAdmin: false,
+            data: [],
+
+            async adminLogin() {
+                const email = prompt("الإيميل:");
+                const pass = prompt("الباسورد:");
+                try { await auth.signInWithEmailAndPassword(email, pass); } catch(e) { alert("خطأ!"); }
+            },
+
+            route(id) {
+                document.querySelectorAll('.page, .nav-btn, .m-nav-item').forEach(el => el.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                if(document.getElementById('btn-'+id)) document.getElementById('btn-'+id).classList.add('active');
+                if(document.getElementById('m-'+id)) document.getElementById('m-'+id).classList.add('active');
+                window.scrollTo(0,0);
+            },
+
+            modal(s) { document.getElementById('modal').style.display = s ? 'flex' : 'none'; },
+
+            parseMedia(url) {
+                if(url.includes('youtube.com') || url.includes('youtu.be')) {
+                    const id = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+                    return { type: 'yt', src: `https://www.youtube.com/embed/${id}` };
+                }
+                if(url.includes('pinterest.com')) {
+                    // حل مشكلة بينترست: نستخدم واجهة مخصصة بدل iframe المباشر
+                    return { type: 'pin', src: url }; 
+                }
+                return { type: 'file', src: url };
+            },
+
+            async save() {
+                const title = document.getElementById('mTitle').value;
+                const link = document.getElementById('mLink').value;
+                const cat = document.getElementById('mCat').value;
+                const desc = document.getElementById('mDesc').value;
+                if(!title || !link) return;
+                const meta = this.parseMedia(link);
+                await db.collection("evodesign_v2").add({ title, cat, desc, type: meta.type, source: meta.src, date: Date.now() });
+                this.modal(false);
+            },
+
+            render() {
+                const containers = { home: document.getElementById('grid-home'), acad: document.getElementById('grid-acad'), show: document.getElementById('grid-show'), store: document.getElementById('grid-store') };
+                Object.values(containers).forEach(c => c.innerHTML = "");
+
+                this.data.forEach(item => {
+                    let mediaHTML = "";
+                    if(item.type === 'yt') mediaHTML = `<iframe src="${item.source}"></iframe>`;
+                    else if(item.type === 'pin') mediaHTML = `<div class="pin-placeholder"><i class="fa-brands fa-pinterest"></i><br><a href="${item.source}" target="_blank" style="color:var(--orange); text-decoration:none; font-weight:bold;">مشاهدة التصميم على Pinterest</a></div>`;
+                    else mediaHTML = `<i class="fa-solid fa-file-arrow-down" style="font-size:3rem; color:var(--blue)"></i>`;
+
+                    const card = `
+                        <div class="card">
+                            <div class="media-area">${mediaHTML}</div>
+                            <div class="card-content">
+                                <h3 class="card-title">${item.title}</h3>
+                                <p class="card-desc">${item.desc}</p>
+                            </div>
+                            <div style="padding:15px; border-top:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between;">
+                                <a href="${item.source}" target="_blank" style="color:var(--blue); font-size:0.8rem; text-decoration:none;">رابط مباشر</a>
+                                ${this.isAdmin ? `<i class="fa-solid fa-trash" style="color:red; cursor:pointer;" onclick="EVO.delete('${item.id}')"></i>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    containers.home.innerHTML += card;
+                    if(containers[item.cat]) containers[item.cat].innerHTML += card;
+                });
+            },
+
+            async delete(id) { if(confirm("حذف؟")) await db.collection("evodesign_v2").doc(id).delete(); },
+
+            init() {
+                auth.onAuthStateChanged(user => {
+                    this.isAdmin = !!user;
+                    document.getElementById('adminFab').style.display = user ? 'flex' : 'none';
+                    this.render();
+                });
+                db.collection("evodesign_v2").orderBy("date", "desc").onSnapshot(s => {
+                    this.data = s.docs.map(d => ({ id: d.id, ...d.data() }));
+                    this.render();
+                });
+            }
+        };
+        window.onload = () => EVO.init();
+    </script>
+</body>
+</html>
